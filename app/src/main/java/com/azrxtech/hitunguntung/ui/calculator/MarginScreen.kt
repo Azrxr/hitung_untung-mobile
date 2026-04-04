@@ -7,8 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ShowChart
 import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.ShowChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +28,7 @@ import com.azrxtech.hitunguntung.ui.home.component.TopBarSection
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
@@ -35,21 +36,21 @@ fun MarginScreen() {
     val scrollState = rememberScrollState()
 
     // State untuk menampung input pengguna
-    var modalInput by remember { mutableStateOf("150000") }
-    var hargaJualInput by remember { mutableStateOf("200000") }
+    var modalInput by remember { mutableStateOf(formatInputWithDots("150000")) }
+    var hargaJualInput by remember { mutableStateOf(formatInputWithDots("200000")) }
 
     // Logika Perhitungan Reaktif
-    val modal = modalInput.toDoubleOrNull() ?: 0.0
-    val hargaJual = hargaJualInput.toDoubleOrNull() ?: 0.0
+    val modal = parseFormattedInput(modalInput)
+    val hargaJual = parseFormattedInput(hargaJualInput)
 
-    val totalKeuntungan = if (hargaJual > modal) hargaJual - modal else 0.0
+    val totalKeuntungan = hargaJual - modal
 
     // Rumus Margin: (Keuntungan / Harga Jual) * 100
     val marginPersen = if (hargaJual > 0) (totalKeuntungan / hargaJual) * 100 else 0.0
 
     // Rasio untuk Progress Bar
-    val profitRatio = if (hargaJual > 0) (totalKeuntungan / hargaJual).toFloat().coerceIn(0f, 1f) else 0f
-    val modalRatio = if (hargaJual > 0) (modal / hargaJual).toFloat().coerceIn(0f, 1f) else 1f
+    val resultRatio = if (hargaJual > 0) (abs(totalKeuntungan) / hargaJual).toFloat().coerceIn(0f, 1f) else 0f
+    val modalRatio = (1f - resultRatio).coerceIn(0f, 1f)
 
     Column(
         modifier = Modifier
@@ -100,7 +101,7 @@ fun MarginScreen() {
         // Hasil 2: Margin Keuntungan (Progress Bar)
         MarginKeuntunganCard(
             marginPersen = marginPersen,
-            profitRatio = profitRatio,
+            resultRatio = resultRatio,
             modalRatio = modalRatio
         )
 
@@ -180,7 +181,7 @@ fun MarginTextField(
 ) {
     OutlinedTextField(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = { onValueChange(formatInputWithDots(it)) },
         leadingIcon = {
             Text(
                 text = "Rp",
@@ -210,19 +211,23 @@ fun MarginTextField(
 
 @Composable
 fun TotalKeuntunganCard(keuntungan: Double) {
+    val isLoss = keuntungan < 0
+    val containerColor = if (isLoss) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val contentColor = if (isLoss) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
+
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = containerColor
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             // Watermark Icon di Kanan (Efek desain dari gambar)
             Icon(
-                imageVector = Icons.Rounded.ShowChart,
+                imageVector = Icons.AutoMirrored.Rounded.ShowChart,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.05f),
+                tint = contentColor.copy(alpha = 0.08f),
                 modifier = Modifier
                     .size(140.dp)
                     .align(Alignment.CenterEnd)
@@ -232,21 +237,21 @@ fun TotalKeuntunganCard(keuntungan: Double) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "Total Keuntungan",
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = contentColor.copy(alpha = 0.75f),
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = "Rp ",
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = contentColor.copy(alpha = 0.75f),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Text(
                         text = formatNilai(keuntungan),
-                        color = Color.White,
+                        color = contentColor,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -254,15 +259,15 @@ fun TotalKeuntunganCard(keuntungan: Double) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Rounded.ShowChart,
+                        imageVector = Icons.AutoMirrored.Rounded.ShowChart,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = contentColor,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "PER TRANSAKSI",
-                        color = Color.White,
+                        text = if (isLoss) "RUGI PER TRANSAKSI" else "PER TRANSAKSI",
+                        color = contentColor,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
@@ -276,9 +281,12 @@ fun TotalKeuntunganCard(keuntungan: Double) {
 @Composable
 fun MarginKeuntunganCard(
     marginPersen: Double,
-    profitRatio: Float,
+    resultRatio: Float,
     modalRatio: Float
 ) {
+    val isLoss = marginPersen < 0
+    val resultColor = if (isLoss) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -295,13 +303,13 @@ fun MarginKeuntunganCard(
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = "${marginPersen.roundToInt()}",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = resultColor,
                     fontSize = 42.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
                     text = "%",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = resultColor,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
@@ -317,12 +325,12 @@ fun MarginKeuntunganCard(
                     .height(8.dp)
                     .clip(RoundedCornerShape(50))
             ) {
-                if (profitRatio > 0f) {
+                if (resultRatio > 0f) {
                     Box(
                         modifier = Modifier
-                            .weight(profitRatio)
+                            .weight(resultRatio)
                             .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.primary)
+                            .background(resultColor)
                     )
                 }
                 if (modalRatio > 0f) {
@@ -344,11 +352,11 @@ fun MarginKeuntunganCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "PROFIT",
+                    text = if (isLoss) "RUGI" else "PROFIT",
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = if (isLoss) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "MODAL",
@@ -422,10 +430,22 @@ fun DynamicInsightCard(marginPersen: Double) {
 // Fungsi Helper formatting (Diletakkan private agar tidak bentrok dengan screen lain)
 private fun formatNilai(number: Double): String {
     if (number == 0.0) return "0"
-    val localeID = Locale("in", "ID")
+    val localeID = Locale.forLanguageTag("id-ID")
     val formatRupiah = NumberFormat.getCurrencyInstance(localeID)
     formatRupiah.maximumFractionDigits = 0
     return formatRupiah.format(number).replace("Rp", "").replace(",00", "").trim()
+}
+
+private fun parseFormattedInput(value: String): Double {
+    return value.replace(".", "").toDoubleOrNull() ?: 0.0
+}
+
+private fun formatInputWithDots(raw: String): String {
+    val digits = raw.filter { it.isDigit() }
+    if (digits.isEmpty()) return ""
+
+    val normalized = digits.trimStart('0').ifEmpty { "0" }
+    return normalized.reversed().chunked(3).joinToString(".").reversed()
 }
 
 @Preview(showBackground = true)
