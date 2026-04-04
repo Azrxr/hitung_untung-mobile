@@ -28,7 +28,12 @@ import com.azrxtech.hitunguntung.ui.home.component.TopBarSection
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onNavigateToKulakan: () -> Unit = {},
+    onNavigateToMargin: () -> Unit = {},
+    onNavigateToDiskon: () -> Unit = {},
+    onNavigateToKembalian: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
     val colorScheme = MaterialTheme.colorScheme
 
@@ -47,7 +52,7 @@ fun HomeScreen() {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        FeaturedKulakanCard(onClick = { /* TODO: Navigasi ke Kulakan */ })
+        FeaturedKulakanCard(onClick = { onNavigateToKulakan })
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -63,7 +68,7 @@ fun HomeScreen() {
                     fontSize = 20.sp
                 )
             },
-            onClick = { /* TODO: Navigasi ke Margin */ }
+            onClick = onNavigateToMargin
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -79,7 +84,7 @@ fun HomeScreen() {
                     tint = colorScheme.onTertiaryContainer
                 )
             },
-            onClick = { /* TODO: Navigasi ke Diskon */ }
+            onClick = onNavigateToDiskon
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -95,7 +100,7 @@ fun HomeScreen() {
                     tint = colorScheme.onPrimaryContainer
                 )
             },
-            onClick = { /* TODO: Navigasi ke Kembalian */ }
+            onClick = onNavigateToKembalian
         )
 
         Spacer(modifier = Modifier.height(32.dp))
