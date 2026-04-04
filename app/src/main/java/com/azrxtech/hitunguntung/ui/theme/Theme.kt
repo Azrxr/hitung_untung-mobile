@@ -1,30 +1,5 @@
 package com.azrxtech.hitunguntung.ui.theme
 
-import BackgroundDark
-import BackgroundLight
-import NeutralOutline
-import OnBackgroundLight
-import OnPrimaryContainerLight
-import OnPrimaryDark
-import OnPrimaryLight
-import OnSecondaryContainerLight
-import OnSecondaryDark
-import OnSecondaryLight
-import OnSurfaceLight
-import OnTertiaryContainerLight
-import OnTertiaryDark
-import OnTertiaryLight
-import PrimaryContainerLight
-import PrimaryDark
-import PrimaryLight
-import SecondaryContainerLight
-import SecondaryDark
-import SecondaryLight
-import SurfaceDark
-import SurfaceLight
-import TertiaryContainerLight
-import TertiaryDark
-import TertiaryLight
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -76,7 +51,7 @@ private val DarkColorScheme = darkColorScheme(
 fun HitungUntungTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color tersedia di Android 12+ (API 31+)
-    // Set false agar aplikasi kita tetap menggunakan warna desain kita (Evergreen Ledger)
+    // Set false agar aplikasi tetap menggunakan desain warna internal
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -85,11 +60,11 @@ fun HitungUntungTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
-    // Mengubah warna status bar (baterai, jam, dll) agar sesuai dengan background
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {

@@ -1,5 +1,5 @@
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+package com.azrxtech.hitunguntung.ui.theme
+
 import androidx.compose.ui.graphics.Color
 
 val PrimaryLight = Color(0xFF004D40)
@@ -32,4 +32,3 @@ val TertiaryDark = Color(0xFFFFB5A0)
 val OnTertiaryDark = Color(0xFF3F1D11)
 val BackgroundDark = Color(0xFF121212)
 val SurfaceDark = Color(0xFF1A1C1B)
-
