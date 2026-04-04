@@ -37,11 +37,19 @@ import com.azrxtech.hitunguntung.ui.calculator.component.SegmentedButton as Calc
 import com.azrxtech.hitunguntung.ui.calculator.component.SummaryComponent
 import com.azrxtech.hitunguntung.ui.home.component.TopBarSection
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
+import com.azrxtech.hitunguntung.util.RibuanVisualTransformation
 import java.text.NumberFormat
 import java.util.Locale
+import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun KulakanScreen() {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
     val color = MaterialTheme.colorScheme
 
@@ -74,7 +82,7 @@ fun KulakanScreen() {
             .fillMaxSize()
             .background(color.background)
             .verticalScroll(scrollState)
-            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
         TopBarSection()
         Spacer(modifier = Modifier.height(24.dp))
@@ -98,9 +106,10 @@ fun KulakanScreen() {
                     Spacer(modifier = Modifier.height(4.dp))
                     KulakanTextField(
                         value = jumlahDus,
-                        onValueChange = { newValue -> jumlahDus = newValue },
+                        onValueChange = { newValue -> jumlahDus = newValue.filter { it.isDigit() } },
                         placeholder = "0",
-                        keyboardType = KeyboardType.Number
+                        keyboardType = KeyboardType.Number,
+                        visualTransformation = RibuanVisualTransformation()
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
@@ -108,10 +117,11 @@ fun KulakanScreen() {
                     Spacer(modifier = Modifier.height(4.dp))
                     KulakanTextField(
                         value = isiPerDus,
-                        onValueChange = { newValue -> isiPerDus = newValue },
+                        onValueChange = { newValue -> isiPerDus = newValue.filter { it.isDigit() } },
                         placeholder = "0",
                         suffix = "PCS",
-                        keyboardType = KeyboardType.Number
+                        keyboardType = KeyboardType.Number,
+                        visualTransformation = RibuanVisualTransformation()
                     )
                 }
             }
@@ -125,12 +135,13 @@ fun KulakanScreen() {
             KulakanTextField(
                 value = totalHargaBeli,
                 onValueChange = { newValue ->
-                    totalHargaBeli = newValue
+                    totalHargaBeli = newValue.filter { it.isDigit() }
                     hargaPerDus = ""
                 },
                 placeholder = "0",
                 prefix = "Rp",
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Number,
+                visualTransformation = RibuanVisualTransformation()
             )
 
             DividerWithText(text = "ATAU MASUKKAN")
@@ -140,12 +151,13 @@ fun KulakanScreen() {
             KulakanTextField(
                 value = hargaPerDus,
                 onValueChange = { newValue ->
-                    hargaPerDus = newValue
+                    hargaPerDus = newValue.filter { it.isDigit() }
                     totalHargaBeli = ""
                 },
                 placeholder = "0",
                 prefix = "Rp",
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Number,
+                visualTransformation = RibuanVisualTransformation()
             )
         }
 
@@ -156,10 +168,11 @@ fun KulakanScreen() {
             Spacer(modifier = Modifier.height(4.dp))
             KulakanTextField(
                 value = ongkir,
-                onValueChange = { newValue -> ongkir = newValue },
+                onValueChange = { newValue -> ongkir = newValue.filter { it.isDigit() } },
                 placeholder = "0",
                 prefix = "Rp",
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Number,
+                visualTransformation = RibuanVisualTransformation()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -168,10 +181,11 @@ fun KulakanScreen() {
             Spacer(modifier = Modifier.height(4.dp))
             KulakanTextField(
                 value = parkir,
-                onValueChange = { newValue -> parkir = newValue },
+                onValueChange = { newValue -> parkir = newValue.filter { it.isDigit() } },
                 placeholder = "0",
                 prefix = "Rp",
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Number,
+                visualTransformation = RibuanVisualTransformation()
             )
         }
 
@@ -189,11 +203,12 @@ fun KulakanScreen() {
         ) {
             KulakanTextField(
                 value = targetKeuntungan,
-                onValueChange = { newValue -> targetKeuntungan = newValue },
+                onValueChange = { newValue -> targetKeuntungan = newValue.filter { it.isDigit() } },
                 placeholder = "Contoh: 15",
                 prefix = if (isPersen) "" else "Rp",
                 suffix = if (isPersen) "%" else "",
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Number,
+                visualTransformation = if (isPersen) androidx.compose.ui.text.input.VisualTransformation.None else RibuanVisualTransformation()
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -206,13 +221,45 @@ fun KulakanScreen() {
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        val shareText = """
+            🧾 Kalkulator Kulakan
+            
+            Barang: ${namaBarang.ifEmpty { "-" }}
+            Jumlah: $qtyDus Dus (${qtyDus * qtyIsiPerDus} pcs)
+            
+            💰 Modal:
+            Total: ${formatRupiah(totalModal)}
+            
+            🎯 Target:
+            Untung: ${formatRupiah(targetUntungTotal)} ${if(isPersen) "($targetKeuntungan%)" else ""}
+            
+            🏷️ Harga Jual:
+            - per pcs: ${formatRupiah(hargaJualPcs)}
+            - per dus: ${formatRupiah(hargaJualDus)}
+        """.trimIndent()
+
         SummaryComponent(
             totalModal = totalModal,
             targetUntung = targetUntungTotal,
             hppPerDus = hppPerDus,
             hppPerPcs = hppPerPcs,
             rekomendasiHargaDus = hargaJualDus,
-            rekomendasiHargaPcs = hargaJualPcs
+            rekomendasiHargaPcs = hargaJualPcs,
+            onShare = {
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, shareText)
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, null)
+                context.startActivity(shareIntent)
+            },
+            onSalin = {
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Kalkulator Kulakan", shareText)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(context, "Tersalin ke papan klip", Toast.LENGTH_SHORT).show()
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))

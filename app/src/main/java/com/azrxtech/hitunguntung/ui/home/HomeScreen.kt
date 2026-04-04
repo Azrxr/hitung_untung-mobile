@@ -52,7 +52,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        FeaturedKulakanCard(onClick = { onNavigateToKulakan })
+        FeaturedKulakanCard(onClick = onNavigateToKulakan)
 
         Spacer(modifier = Modifier.height(16.dp))
 

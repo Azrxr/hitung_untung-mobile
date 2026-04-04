@@ -2,6 +2,7 @@ package com.azrxtech.hitunguntung.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -25,11 +26,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.azrxtech.hitunguntung.R
 
 @Composable
 fun SplashScreen(
     onSplashFinished: () -> Unit // Callback saat animasi selesai untuk pindah ke Home
 ) {
+    val context = LocalContext.current
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    val versionName = packageInfo.versionName ?: "1.0.0"
+    val appName = stringResource(id = R.string.app_name)
+
     // State untuk Animasi
     val scaleAnimation = remember { Animatable(0.5f) } // Mulai dari ukuran setengah
     val alphaAnimation = remember { Animatable(0f) }   // Mulai dari transparan (tidak terlihat)
@@ -89,11 +99,10 @@ fun SplashScreen(
                     .clip(CircleShape)
                     .background(iconBackground)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Storefront,
-                    contentDescription = "Logo Kalkulator Dagang",
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp)
+                Image(
+                    painter = painterResource(id = com.azrxtech.hitunguntung.R.drawable.ic_brand),
+                    contentDescription = "Logo Aplikasi",
+                    Modifier.size(48.dp)
                 )
             }
 
@@ -101,7 +110,7 @@ fun SplashScreen(
 
             // Teks Judul
             Text(
-                text = "Kalkulator Dagang",
+                text = appName,
                 color = Color.White,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
@@ -129,7 +138,7 @@ fun SplashScreen(
 
             // Teks Versi Aplikasi
             Text(
-                text = "Versi 1.0.0",
+                text = "Versi $versionName",
                 color = Color.White.copy(alpha = 0.4f), // Lebih redup dari tagline
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Normal
@@ -138,8 +147,6 @@ fun SplashScreen(
     }
 }
 
-// Fungsi helper matematika murni untuk efek Overshoot/Membal yang ringan
-// Menggantikan kebutuhan library eksternal
 private fun overshootEasing(fraction: Float): Float {
     val tension = 1.2f // Semakin tinggi semakin membal
     val t = fraction - 1f

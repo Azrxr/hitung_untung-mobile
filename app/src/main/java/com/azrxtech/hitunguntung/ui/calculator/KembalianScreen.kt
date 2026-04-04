@@ -3,6 +3,7 @@ package com.azrxtech.hitunguntung.ui.calculator
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,14 +27,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.azrxtech.hitunguntung.ui.home.component.TopBarSection
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
+import com.azrxtech.hitunguntung.util.RibuanVisualTransformation
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
@@ -62,7 +61,7 @@ fun KembalianScreen() {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
         // App Bar dari komponen yang sudah ada
         TopBarSection()
@@ -98,7 +97,10 @@ fun KembalianScreen() {
                 uangBayarInput = it.filter { char -> char.isDigit() }
             },
             onUangPasClick = { uangBayarInput = totalBelanjaInput },
-            onQuickNominalClick = { nominal -> uangBayarInput = nominal }
+            onQuickNominalClick = { nominal ->
+                val current = uangBayarInput.toLongOrNull() ?: 0L
+                uangBayarInput = (current + nominal.toLong()).toString()
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -129,7 +131,7 @@ fun InputKembalianCard(
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
         ),
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier.fillMaxWidth()
@@ -169,23 +171,34 @@ fun InputKembalianCard(
 
             // Quick Actions / Chip Buttons
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 QuickNominalChip(
                     text = "Uang Pas",
-                    onClick = onUangPasClick,
-                    modifier = Modifier.weight(1f)
+                    onClick = onUangPasClick
+                )
+                QuickNominalChip(
+                    text = "Rp 5.000",
+                    onClick = { onQuickNominalClick("5000") }
+                )
+                QuickNominalChip(
+                    text = "Rp 10.000",
+                    onClick = { onQuickNominalClick("10000") }
+                )
+                QuickNominalChip(
+                    text = "Rp 20.000",
+                    onClick = { onQuickNominalClick("20000") }
                 )
                 QuickNominalChip(
                     text = "Rp 50.000",
-                    onClick = { onQuickNominalClick("50000") },
-                    modifier = Modifier.weight(1f)
+                    onClick = { onQuickNominalClick("50000") }
                 )
                 QuickNominalChip(
                     text = "Rp 100.000",
-                    onClick = { onQuickNominalClick("100000") },
-                    modifier = Modifier.weight(1.2f)
+                    onClick = { onQuickNominalClick("100000") }
                 )
             }
         }
@@ -240,9 +253,9 @@ fun QuickNominalChip(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(Color(0xFFD3E6ED))
+            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
             .clickable { onClick() }
-            .padding(vertical = 10.dp),
+            .padding(vertical = 10.dp, horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -434,51 +447,8 @@ fun DashedPlaceholderCard(modifier: Modifier = Modifier) {
     }
 }
 
-// Visual Transformation Kustom untuk memberikan Titik Ribuan otomatis pada Textfield
-class RibuanVisualTransformation : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val originalText = text.text
-        if (originalText.isEmpty()) return TransformedText(text, OffsetMapping.Identity)
+// Akhir VisualTransformation. Bagian perhitungan pecahan di bawah:
 
-        val formatter = NumberFormat.getInstance(Locale("in", "ID"))
-        val formattedText = try {
-            formatter.format(originalText.toLong())
-        } catch (e: Exception) {
-            originalText
-        }
-
-        val offsetMapping = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                var dots = 0
-                var transformedIndex = 0
-                var originalIndex = 0
-                while (originalIndex < offset && transformedIndex < formattedText.length) {
-                    if (formattedText[transformedIndex] == '.') {
-                        dots++
-                    } else {
-                        originalIndex++
-                    }
-                    transformedIndex++
-                }
-                return offset + dots
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                var originalIndex = 0
-                var transformedIndex = 0
-                while (transformedIndex < offset && transformedIndex < formattedText.length) {
-                    if (formattedText[transformedIndex] != '.') {
-                        originalIndex++
-                    }
-                    transformedIndex++
-                }
-                return originalIndex
-            }
-        }
-
-        return TransformedText(AnnotatedString(formattedText), offsetMapping)
-    }
-}
 
 // Algoritma untuk menghitung pecahan kembalian
 private fun hitungPecahan(kembalian: Long): List<PecahanItem> {

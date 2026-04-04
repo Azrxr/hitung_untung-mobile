@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.azrxtech.hitunguntung.ui.home.component.TopBarSection
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
+import com.azrxtech.hitunguntung.util.RibuanVisualTransformation
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -64,7 +65,7 @@ fun DiskonScreen() {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
 
         TopBarSection()
@@ -91,9 +92,9 @@ fun DiskonScreen() {
         // Input Form Card
         InputDiskonCard(
             hargaAwalValue = hargaAwalInput,
-            onHargaAwalChange = { hargaAwalInput = it },
+            onHargaAwalChange = { hargaAwalInput = it.filter(Char::isDigit) },
             potonganValue = potonganInput,
-            onPotonganChange = { potonganInput = it },
+            onPotonganChange = { potonganInput = it.filter(Char::isDigit) },
             isPersen = isPersen,
             onTogglePersen = { isPersen = it }
         )
@@ -132,7 +133,7 @@ fun InputDiskonCard(
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
         ),
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier.fillMaxWidth()
@@ -150,7 +151,8 @@ fun InputDiskonCard(
                 value = hargaAwalValue,
                 onValueChange = onHargaAwalChange,
                 placeholder = "0",
-                prefix = "Rp"
+                prefix = "Rp",
+                visualTransformation = RibuanVisualTransformation()
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -175,7 +177,8 @@ fun InputDiskonCard(
                 onValueChange = onPotonganChange,
                 placeholder = if (isPersen) "Contoh: 15" else "Contoh: 50000",
                 prefix = if (!isPersen) "Rp" else "",
-                suffix = if (isPersen) "%" else ""
+                suffix = if (isPersen) "%" else "",
+                visualTransformation = if (!isPersen) RibuanVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -206,7 +209,8 @@ fun DiskonTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     prefix: String = "",
-    suffix: String = ""
+    suffix: String = "",
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None
 ) {
     OutlinedTextField(
         value = value,
@@ -233,6 +237,7 @@ fun DiskonTextField(
         } else null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         singleLine = true,
+        visualTransformation = visualTransformation,
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -298,7 +303,7 @@ fun SegmentedToggleButton(isPersen: Boolean, onToggle: (Boolean) -> Unit) {
 fun SavingsAndMarginRow(totalHemat: Double, marginPersen: Double) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF5F6)), // Light blue-gray from theme
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer), // Light blue-gray from theme
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -405,29 +410,6 @@ fun FinalPriceCard(hargaAkhir: Double) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider(color = Color.White.copy(alpha = 0.2f), thickness = 1.dp)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Rincian Transaksi Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { /* Buka rincian */ },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Rincian Transaksi",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
-                Icon(
-                    imageVector = Icons.Rounded.ChevronRight,
-                    contentDescription = "Detail",
-                    tint = Color.White
-                )
-            }
         }
     }
 }

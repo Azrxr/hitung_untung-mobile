@@ -1,5 +1,6 @@
 package com.azrxtech.hitunguntung.ui.calculator
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.azrxtech.hitunguntung.R
 import com.azrxtech.hitunguntung.ui.home.component.TopBarSection
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
 import java.text.NumberFormat
@@ -57,7 +60,7 @@ fun MarginScreen() {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
         // App Bar menggunakan komponen yang sudah ada
         TopBarSection()
@@ -121,11 +124,10 @@ fun MarginScreen() {
                 .background(Color.LightGray.copy(alpha = 0.5f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Image,
+            Image(
+                painter = painterResource(id = R.drawable.bg_margin),
                 contentDescription = "Placeholder Ilustrasi",
-                tint = Color.Gray,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.fillMaxSize()
             )
         }
 
@@ -143,7 +145,7 @@ fun InputMarginCard(
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
         ),
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier.fillMaxWidth()
@@ -186,7 +188,7 @@ fun MarginTextField(
             Text(
                 text = "Rp",
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.4f),
                 fontSize = 14.sp
             )
         },
@@ -289,7 +291,7 @@ fun MarginKeuntunganCard(
 
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         elevation = CardDefaults.cardElevation(0.5.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -396,7 +398,7 @@ fun DynamicInsightCard(marginPersen: Double) {
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             // Warna biru keabu-abuan terang sesuai desain
-            containerColor = Color(0xFFEFF5F6)
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
         elevation = CardDefaults.cardElevation(0.dp),
         modifier = Modifier.fillMaxWidth()

@@ -100,7 +100,8 @@ fun KulakanTextField(
     placeholder: String,
     prefix: String = "",
     suffix: String = "",
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None
 ) {
     val color = MaterialTheme.colorScheme
     OutlinedTextField(
@@ -110,6 +111,7 @@ fun KulakanTextField(
         leadingIcon = if (prefix.isNotEmpty()) { { Text(prefix, fontWeight = FontWeight.Bold, color = color.onBackground) } } else null,
         trailingIcon = if (suffix.isNotEmpty()) { { Text(suffix, fontWeight = FontWeight.Bold, color = color.onSurfaceVariant) } } else null,
         singleLine = true,
+        visualTransformation = visualTransformation,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = color.surface,

@@ -5,6 +5,7 @@
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <!-- Set background native splash screen sama dengan warna background compose -->
         <item name="windowSplashScreenBackground">#004D40</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.HitungUntung</item>
     </style>
 </resources>

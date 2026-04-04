@@ -41,7 +41,9 @@ fun SummaryComponent(
     hppPerDus: Double,
     hppPerPcs: Double,
     rekomendasiHargaDus: Double,
-    rekomendasiHargaPcs: Double
+    rekomendasiHargaPcs: Double,
+    onShare: () -> Unit = {},
+    onSalin: () -> Unit = {}
 ) {
     val color = androidx.compose.material3.MaterialTheme.colorScheme
     Card(
@@ -91,7 +93,7 @@ fun SummaryComponent(
 
                 // Share Icon
                 IconButton(
-                    onClick = { /* TODO: Share action */ },
+                    onClick = onShare,
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(color.onPrimary.copy(alpha = 0.1f))
@@ -141,16 +143,16 @@ fun SummaryComponent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Button Simpan
+            // Button Salin
             Button(
-                onClick = { /* TODO: Save logic */ },
+                onClick = onSalin,
                 colors = ButtonDefaults.buttonColors(containerColor = color.onPrimary, contentColor = color.primary),
                 shape = RoundedCornerShape(50),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
-                Text("Simpan ke Riwayat", fontWeight = FontWeight.Bold)
+                Text("Salin", fontWeight = FontWeight.Bold)
             }
         }
     }

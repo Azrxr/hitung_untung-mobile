@@ -57,4 +57,6 @@ dependencies {
 
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
 }

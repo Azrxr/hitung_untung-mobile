@@ -19,11 +19,30 @@ import com.azrxtech.hitunguntung.ui.calculator.KulakanScreen
 import com.azrxtech.hitunguntung.ui.calculator.MarginScreen
 import com.azrxtech.hitunguntung.ui.calculator.DiskonScreen
 import com.azrxtech.hitunguntung.ui.calculator.KembalianScreen
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        
+        val appUpdateManager = AppUpdateManagerFactory.create(this)
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                appUpdateManager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    AppUpdateType.IMMEDIATE,
+                    this,
+                    100
+                )
+            }
+        }
+        
         enableEdgeToEdge()
 
         setContent {

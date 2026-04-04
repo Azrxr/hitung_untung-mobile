@@ -20,38 +20,57 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = OnPrimaryLight,
     primaryContainer = PrimaryContainerLight,
     onPrimaryContainer = OnPrimaryContainerLight,
+
     secondary = SecondaryLight,
     onSecondary = OnSecondaryLight,
     secondaryContainer = SecondaryContainerLight,
     onSecondaryContainer = OnSecondaryContainerLight,
+
     tertiary = TertiaryLight,
     onTertiary = OnTertiaryLight,
     tertiaryContainer = TertiaryContainerLight,
     onTertiaryContainer = OnTertiaryContainerLight,
+
     background = BackgroundLight,
     onBackground = OnBackgroundLight,
     surface = SurfaceLight,
     onSurface = OnSurfaceLight,
-    outline = NeutralOutline
+
+    surfaceVariant = SurfaceVariantLight,
+    onSurfaceVariant = OnSurfaceVariantLight,
+    outline = NeutralOutlineLight
 )
 
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,
     onPrimary = OnPrimaryDark,
+    primaryContainer = PrimaryContainerDark,
+    onPrimaryContainer = OnPrimaryContainerDark,
+
     secondary = SecondaryDark,
     onSecondary = OnSecondaryDark,
+    secondaryContainer = SecondaryContainerDark,
+    onSecondaryContainer = OnSecondaryContainerDark,
+
     tertiary = TertiaryDark,
     onTertiary = OnTertiaryDark,
+    tertiaryContainer = TertiaryContainerDark,
+    onTertiaryContainer = OnTertiaryContainerDark,
+
     background = BackgroundDark,
+    onBackground = OnBackgroundDark, // Mencegah teks tak terlihat di dark mode
     surface = SurfaceDark,
-    outline = NeutralOutline
+    onSurface = OnSurfaceDark,
+
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnSurfaceVariantDark,
+    outline = NeutralOutlineDark
 )
 
 @Composable
 fun HitungUntungTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color tersedia di Android 12+ (API 31+)
-    // Set false agar aplikasi tetap menggunakan desain warna internal
+    // Set false agar aplikasi tetap menggunakan desain warna internal kita
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -60,7 +79,6 @@ fun HitungUntungTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
@@ -70,13 +88,14 @@ fun HitungUntungTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
+            // Memastikan ikon status bar putih di dark mode, dan hitam di light mode
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // Pastikan Anda memiliki file Type.kt yang mendeklarasikan ini
         content = content
     )
 }
