@@ -1,5 +1,30 @@
 package com.azrxtech.hitunguntung.ui.theme
 
+import BackgroundDark
+import BackgroundLight
+import NeutralOutline
+import OnBackgroundLight
+import OnPrimaryContainerLight
+import OnPrimaryDark
+import OnPrimaryLight
+import OnSecondaryContainerLight
+import OnSecondaryDark
+import OnSecondaryLight
+import OnSurfaceLight
+import OnTertiaryContainerLight
+import OnTertiaryDark
+import OnTertiaryLight
+import PrimaryContainerLight
+import PrimaryDark
+import PrimaryLight
+import SecondaryContainerLight
+import SecondaryDark
+import SecondaryLight
+import SurfaceDark
+import SurfaceLight
+import TertiaryContainerLight
+import TertiaryDark
+import TertiaryLight
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -9,35 +34,50 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = PrimaryLight,
+    onPrimary = OnPrimaryLight,
+    primaryContainer = PrimaryContainerLight,
+    onPrimaryContainer = OnPrimaryContainerLight,
+    secondary = SecondaryLight,
+    onSecondary = OnSecondaryLight,
+    secondaryContainer = SecondaryContainerLight,
+    onSecondaryContainer = OnSecondaryContainerLight,
+    tertiary = TertiaryLight,
+    onTertiary = OnTertiaryLight,
+    tertiaryContainer = TertiaryContainerLight,
+    onTertiaryContainer = OnTertiaryContainerLight,
+    background = BackgroundLight,
+    onBackground = OnBackgroundLight,
+    surface = SurfaceLight,
+    onSurface = OnSurfaceLight,
+    outline = NeutralOutline
+)
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryDark,
+    onPrimary = OnPrimaryDark,
+    secondary = SecondaryDark,
+    onSecondary = OnSecondaryDark,
+    tertiary = TertiaryDark,
+    onTertiary = OnTertiaryDark,
+    background = BackgroundDark,
+    surface = SurfaceDark,
+    outline = NeutralOutline
 )
 
 @Composable
 fun HitungUntungTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Dynamic color tersedia di Android 12+ (API 31+)
+    // Set false agar aplikasi kita tetap menggunakan warna desain kita (Evergreen Ledger)
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -45,9 +85,18 @@ fun HitungUntungTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
+    }
+
+    // Mengubah warna status bar (baterai, jam, dll) agar sesuai dengan background
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+        }
     }
 
     MaterialTheme(
