@@ -59,4 +59,15 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.play.app.update)
     implementation(libs.play.app.update.ktx)
+
+    // Firebase (Menggunakan BoM agar versi seragam)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.analytics)
+
+    // Coil (Image Loader)
+    implementation(libs.coil.compose)
+
+    // Custom Tabs (In-App Browser)
+    implementation(libs.androidx.browser)
 }

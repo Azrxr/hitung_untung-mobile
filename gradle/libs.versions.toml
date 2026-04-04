@@ -12,6 +12,11 @@ composeBom = "2024.09.00"
 navigationCompose = "2.9.7"
 playAppUpdate = "2.1.0"
 
+firebaseBom = "34.11.0"
+googleServices = "4.4.4"
+coil = "2.7.0"
+browser = "1.10.0"
+
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,7 +38,19 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
 play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
 
+# Firebase
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" } # Opsional tapi disarankan
+
+# Coil untuk Load Gambar Banner
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# Chrome Custom Tabs untuk buka link iklan di dalam app
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

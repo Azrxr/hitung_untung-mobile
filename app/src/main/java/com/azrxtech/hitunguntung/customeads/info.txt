@@ -32,3 +32,44 @@ Struktur Database Cloud Firestore
   "schedule_start": "2026-04-05T00:00:00Z",
   "schedule_end": "2026-04-10T23:59:59Z"
 }
+
+============
+SETUP
+============
+
+== libs.version.toml
+[version]
+firebaseBom = "34.11.0"
+googleServices = "4.4.4"
+coil = "2.7.0"
+browser = "1.10.0"
+
+[libraries]
+# Firebase
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" } # Opsional tapi disarankan
+
+# Coil untuk Load Gambar Banner
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# Chrome Custom Tabs untuk buka link iklan di dalam app
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+
+[plugins]
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+
+===build.gradle.kts(project)
+alias(libs.plugins.google.services) apply false
+
+===build.gradle.kts(Module:App)
+// Firebase (Menggunakan BoM agar versi seragam)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.analytics)
+
+    // Coil (Image Loader)
+    implementation(libs.coil.compose)
+
+    // Custom Tabs (In-App Browser)
+    implementation(libs.androidx.browser)
