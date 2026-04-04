@@ -1,0 +1,34 @@
+===
+Struktur Database Cloud Firestore
+===
+===Collection: "ad_settings" -> Document: "global_config"
+
+{
+  "is_ads_enabled": true,
+
+  // STRATEGI PEMICU UTAMA (Pilih salah satu: "first_open_only", "after_clicks", "after_seconds", "hybrid")
+  "trigger_strategy": "after_clicks",
+
+  // PARAMETER (Aplikasi hanya akan membaca parameter yang sesuai dengan strateginya)
+  "trigger_clicks_count": 5,        // Dibaca jika strategi "after_clicks" atau "hybrid"
+  "trigger_seconds_delay": 120,     // Dibaca jika strategi "after_seconds" atau "hybrid"
+
+  // PENGATURAN UMUM IKLAN
+  "show_on_first_open": true,       // BISA DIKOMBINASIKAN. Jika true, iklan selalu muncul saat splash screen selesai.
+  "skip_duration_seconds": 3        // Waktu tunggu tombol skip muncul
+}
+
+===Collection: "campaigns" -> Document: "ad_001", "ad_002", dst.
+{
+  "ad_id": "ad_001",
+  "is_active": true,
+  "ad_type": "image",               // Bisa "image" atau "video" (untuk rilis awal, fokus ke "image" dulu agar ringan)
+  "title": "Promo Website A",
+  "media_url": "https://...",       // Ganti nama dari image_url ke media_url agar fleksibel
+  "target_url": "https://...",
+  "weight": 50,                     // Algoritma probabilitas
+  "open_target_in": "internal",     // "internal" (WebView/Custom Tabs) atau "external" (Browser Bawaan HP)
+  "button_text": "Daftar Sekarang",
+  "schedule_start": "2026-04-05T00:00:00Z",
+  "schedule_end": "2026-04-10T23:59:59Z"
+}
