@@ -6,10 +6,8 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,38 +20,47 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import com.azrxtech.hitunguntung.customeads.manager.AdManager
 import com.azrxtech.hitunguntung.customeads.model.AdCampaign
-import kotlinx.coroutines.delay
-import androidx.core.net.toUri
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
+import kotlinx.coroutines.delay
 
 private const val TAG = "CustomAds.Interstitial"
 
-/**
- * Layar iklan interstitial full-screen.
- *
- * Behavior berdasarkan ad_type:
- * - "image": Tampilkan gambar. Klik area gambar → buka target_url. Countdown → skip.
- * - "video": Tampilkan video. Klik area video → buka target_url. Countdown → skip.
- * - "webview": INTERAKTIF tanpa batas waktu. Countdown tetap berjalan tapi TIDAK auto-close.
- *   Setelah countdown habis: tombol Skip + tombol CTA (button_text) muncul berdampingan.
- */
 @Composable
 fun InterstitialAdScreen(
+    campaign: AdCampaign,
+    onClose: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { /* Kosongkan agar back press tidak bekerja */ },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        InterstitialAdContent(campaign = campaign, onClose = onClose)
+    }
+}
+
+/**
+ * Konten UI dipisah dari Dialog agar anotasi @Preview dapat merender tampilan dengan baik
+ * di dalam Android Studio.
+ */
+@Composable
+private fun InterstitialAdContent(
     campaign: AdCampaign,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
     val isWebView = campaign.adType == "webview"
 
-    // Ambil delay dari konfigurasi (default 3 detik jika gagal fetch)
-    val skipDelaySeconds = AdManager.config?.skipDurationSeconds ?: 3
+    // Ambil delay dari konfigurasi (default 5 detik jika gagal fetch)
+    val skipDelaySeconds = AdManager.config?.skipDurationSeconds ?: 5
     var countdown by remember { mutableIntStateOf(skipDelaySeconds) }
     var canSkip by remember { mutableStateOf(false) }
-
-    Log.i(TAG, "📺 InterstitialAdScreen tampil: type=${campaign.adType}, title=${campaign.title}")
-    Log.d(TAG, "   ├─ skipDelay=${skipDelaySeconds}s, isWebView=$isWebView")
 
     // Efek hitung mundur
     LaunchedEffect(key1 = Unit) {
@@ -62,14 +69,13 @@ fun InterstitialAdScreen(
             countdown--
         }
         canSkip = true
-        Log.d(TAG, "⏰ Countdown selesai → canSkip=true")
     }
 
-    // Fungsi buka target URL
+    // Fungsi buka target URL (Link Tujuan)
     val openTargetUrl: () -> Unit = {
         try {
             val uri = campaign.targetUrl.toUri()
-            Log.i(TAG, "🔗 Membuka target: ${campaign.targetUrl} (mode=${campaign.openTargetIn})")
+            Log.i(TAG, "🔗 Membuka target: ${campaign.targetUrl}")
             if (campaign.openTargetIn == "internal") {
                 val customTabsIntent = CustomTabsIntent.Builder().build()
                 customTabsIntent.launchUrl(context, uri)
@@ -82,23 +88,74 @@ fun InterstitialAdScreen(
         }
     }
 
-    // Dialog full-screen overlay
-    Dialog(
-        onDismissRequest = { if (canSkip) onClose() },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = canSkip
-        )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
     ) {
-        Box(
+        // ===== TOP BAR (Mirip UI AdMob) =====
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
+                .fillMaxWidth()
+                .height(40.dp)
+                .background(Color.Black),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // ===== KONTEN IKLAN =====
+            // Kiri: Teks "Ads"
+            Text(
+                text = "Ads",
+                color = Color.White,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(start = 10.dp)
+            )
+
+            // Kanan: Countdown ATAU Tombol Open & X
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(end = 4.dp)
+            ) {
+                if (!canSkip) {
+                    Text(
+                        text = "Close in $countdown",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                } else {
+                    // Jika Webview, munculkan teks "Open" di samping X secara rapat
+                    if (isWebView) {
+                        Text(
+                            text = campaign.buttonText,
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .clickable { openTargetUrl() }
+                                .padding(horizontal = 4.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    // Tombol X (Close)
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close Ad",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(40.dp) // Ukuran proporsional
+                            .clickable { onClose() }
+                            .padding(8.dp)
+                    )
+                }
+            }
+        }
+
+        // ===== KONTEN IKLAN =====
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .weight(1f)) {
             when (campaign.adType) {
                 "image" -> {
-                    // Klik area gambar → buka target_url
+                    // Image: Seluruh area bisa diklik menuju link
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -108,7 +165,7 @@ fun InterstitialAdScreen(
                     }
                 }
                 "video" -> {
-                    // Klik area video → buka target_url
+                    // Video: Seluruh area bisa diklik menuju link
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -118,17 +175,13 @@ fun InterstitialAdScreen(
                     }
                 }
                 "webview" -> {
-                    // WebView interaktif - user bisa scroll, klik link di dalam webview
-                    // Padding bottom untuk memberi ruang tombol-tombol
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = 80.dp) // Ruang untuk tombol bawah
-                    ) {
+                    // WebView: Area scroll interaktif murni (klik ditangani dari dalam WebView sendiri)
+                    Box(modifier = Modifier.fillMaxSize()) {
                         AdWebViewComponent(mediaUrl = campaign.mediaUrl)
                     }
                 }
                 else -> {
+                    // Fallback
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -138,149 +191,35 @@ fun InterstitialAdScreen(
                     }
                 }
             }
-
-            // ===== TOMBOL SKIP & COUNTDOWN (Pojok Kanan Atas) =====
-            if (!isWebView) {
-                // Image/Video: Tombol skip standar di pojok kanan atas
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
-                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50))
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    if (canSkip) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            TextButton(
-                                onClick = {
-                                    Log.i(TAG, "⏭️ User menekan Skip (image/video)")
-                                    onClose()
-                                },
-                                contentPadding = PaddingValues(0.dp),
-                                modifier = Modifier.height(24.dp)
-                            ) {
-                                Text(text = "Lewati", color = Color.White, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    } else {
-                        Text(
-                            text = "Iklan ($countdown)",
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-
-                // Image/Video: Tombol CTA di bawah
-                Button(
-                    onClick = openTargetUrl,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(32.dp)
-                        .fillMaxWidth(0.8f)
-                        .height(56.dp)
-                ) {
-                    Text(
-                        text = campaign.buttonText,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            } else {
-                // ===== WEBVIEW SPECIAL: Countdown di atas, lalu tombol skip + CTA berdampingan di bawah =====
-
-                // Countdown badge di pojok kanan atas (saat countdown belum habis)
-                if (!canSkip) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(16.dp)
-                            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50))
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = "Iklan ($countdown)",
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-
-                // Setelah countdown habis: Tombol Skip + CTA berdampingan di bawah
-                if (canSkip) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.7f))
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Tombol Skip (outline style)
-                        OutlinedButton(
-                            onClick = {
-                                Log.i(TAG, "⏭️ User menekan Skip (webview)")
-                                onClose()
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color.White
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder(enabled = true),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
-                        ) {
-                            Icon(Icons.Rounded.Close, contentDescription = "Skip", modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Lewati",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                        }
-
-                        // Tombol CTA (filled, primary)
-                        Button(
-                            onClick = openTargetUrl,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            modifier = Modifier
-                                .weight(1.5f)
-                                .height(48.dp)
-                        ) {
-                            Icon(Icons.Rounded.OpenInNew, contentDescription = "Open", modifier = Modifier.size(18.dp), tint = Color.White)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = campaign.buttonText,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }
 
-@Preview(showBackground = true)
+
+@Preview(showBackground = true, name = "1. WebView (Can Skip)")
 @Composable
-private fun AdPrev() {
-    HitungUntungTheme{
-        InterstitialAdScreen(
+private fun InterstitialWebViewPreview() {
+    HitungUntungTheme {
+        InterstitialAdContent(
             campaign = AdCampaign(
                 adType = "webview",
-                mediaUrl = "https://www.example.com"
+                mediaUrl = "https://azrxr.my.id",
+                targetUrl = "https://azrxr.my.id"
+            ),
+            onClose = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "2. Image Ad (Full Clickable)")
+@Composable
+private fun InterstitialImagePreview() {
+    HitungUntungTheme {
+        InterstitialAdContent(
+            campaign = AdCampaign(
+                adType = "image",
+                mediaUrl = "https://via.placeholder.com/400x800",
+                targetUrl = "https://azrxr.my.id"
             ),
             onClose = {}
         )
