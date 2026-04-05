@@ -1,7 +1,7 @@
 ===
 Struktur Database Cloud Firestore
 ===
-===Collection: "ad_settings" -> Document: "global_config"
+===Collection: "ad_settings" -> Document: "hitunguntung_config"
 
 {
   "is_ads_enabled": true,
@@ -22,7 +22,7 @@ Struktur Database Cloud Firestore
 {
   "ad_id": "ad_001",
   "is_active": true,
-  "ad_type": "image",               // Bisa "image" atau "video" (untuk rilis awal, fokus ke "image" dulu agar ringan)
+  "ad_type": "image",               // Bisa "image" atau "video" dan "webview
   "title": "Promo Website A",
   "media_url": "https://...",       // Ganti nama dari image_url ke media_url agar fleksibel
   "target_url": "https://...",
@@ -73,3 +73,37 @@ alias(libs.plugins.google.services) apply false
 
     // Custom Tabs (In-App Browser)
     implementation(libs.androidx.browser)
+
+===instalasi
+// ... import existing ...
+import com.azrxtech.hitunguntung.customads.manager.AdManager
+import com.azrxtech.hitunguntung.customads.view.InterstitialAdScreen
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+        super.onCreate(savedInstanceState)
+
+        // 1. Inisialisasi AdManager (Ambil data dari Firebase)
+        AdManager.initialize()
+
+        setContent {
+            HitungUntungTheme {
+                // ... setup navigasi yang sebelumnya dibuat ...
+
+                // 2. Tempelkan Observasi AdManager di luar NavHost agar menimpa semua layar
+                val currentAd by AdManager.currentAd.collectAsState()
+
+                currentAd?.let { campaign ->
+                    InterstitialAdScreen(
+                        campaign = campaign,
+                        onClose = { AdManager.closeAd() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+Dan kapanpun Anda butuh men-trigger iklan (misalnya klik pindah dari Menu Home ke Kalkulator Kulakan), cukup sisipkan:
+`AdManager.registerClick()` di *callback* tombol tersebut. Sangat modular bukan?

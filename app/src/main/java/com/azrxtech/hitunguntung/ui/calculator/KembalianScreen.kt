@@ -36,12 +36,18 @@ import com.azrxtech.hitunguntung.util.RibuanVisualTransformation
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
+import androidx.activity.compose.BackHandler
 
 // Data class untuk menampung rincian pecahan kembalian
 data class PecahanItem(val nominal: Long, val jumlah: Int, val tipe: String)
 
 @Composable
-fun KembalianScreen() {
+fun KembalianScreen(
+    onBackClick: (() -> Unit)? = null
+) {
+    if (onBackClick != null) {
+        BackHandler { onBackClick() }
+    }
     val scrollState = rememberScrollState()
 
     // State untuk Input (Hanya menyimpan digit angka murni tanpa titik)

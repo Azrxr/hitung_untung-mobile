@@ -46,9 +46,17 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.BackHandler
+import com.azrxtech.hitunguntung.customeads.manager.AdManager
 
 @Composable
-fun KulakanScreen() {
+fun KulakanScreen(
+    onBackClick: (() -> Unit)? = null
+) {
+    // Intercept tombol back untuk registerClick
+    if (onBackClick != null) {
+        BackHandler { onBackClick() }
+    }
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val color = MaterialTheme.colorScheme
@@ -246,6 +254,7 @@ fun KulakanScreen() {
             rekomendasiHargaDus = hargaJualDus,
             rekomendasiHargaPcs = hargaJualPcs,
             onShare = {
+                AdManager.registerClick()
                 val sendIntent: Intent = Intent().apply {
                     action = Intent.ACTION_SEND
                     putExtra(Intent.EXTRA_TEXT, shareText)
@@ -255,6 +264,7 @@ fun KulakanScreen() {
                 context.startActivity(shareIntent)
             },
             onSalin = {
+                AdManager.registerClick()
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Kalkulator Kulakan", shareText)
                 clipboard.setPrimaryClip(clip)

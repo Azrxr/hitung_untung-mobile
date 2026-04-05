@@ -32,9 +32,15 @@ import com.azrxtech.hitunguntung.util.RibuanVisualTransformation
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.activity.compose.BackHandler
 
 @Composable
-fun DiskonScreen() {
+fun DiskonScreen(
+    onBackClick: (() -> Unit)? = null
+) {
+    if (onBackClick != null) {
+        BackHandler { onBackClick() }
+    }
     val scrollState = rememberScrollState()
 
     // State Input

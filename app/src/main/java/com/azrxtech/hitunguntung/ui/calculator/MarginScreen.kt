@@ -33,9 +33,15 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.activity.compose.BackHandler
 
 @Composable
-fun MarginScreen() {
+fun MarginScreen(
+    onBackClick: (() -> Unit)? = null
+) {
+    if (onBackClick != null) {
+        BackHandler { onBackClick() }
+    }
     val scrollState = rememberScrollState()
 
     // State untuk menampung input pengguna
