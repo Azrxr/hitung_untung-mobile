@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
+import androidx.activity.compose.BackHandler // Tambahkan import ini
+import com.azrxtech.hitunguntung.customads.view.AdWebViewComponent
 import com.azrxtech.hitunguntung.customeads.manager.AdManager
 import com.azrxtech.hitunguntung.customeads.model.AdCampaign
 import com.azrxtech.hitunguntung.ui.theme.HitungUntungTheme
@@ -33,14 +35,17 @@ fun InterstitialAdScreen(
     campaign: AdCampaign,
     onClose: () -> Unit
 ) {
+    // Dialog overlay dengan proteksi ketat
     Dialog(
-        onDismissRequest = { /* Kosongkan agar back press tidak bekerja */ },
+        onDismissRequest = { /* Kosongkan agar back press dari luar tidak bekerja otomatis menutup */ },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
-            dismissOnBackPress = false,
+            // UBAH JADI TRUE: Agar BackHandler di dalam konten bisa menangkap event-nya
+            dismissOnBackPress = true,
             dismissOnClickOutside = false
         )
     ) {
+        // Panggil konten UI yang terpisah agar bisa di-Preview dengan mudah
         InterstitialAdContent(campaign = campaign, onClose = onClose)
     }
 }
@@ -56,6 +61,15 @@ private fun InterstitialAdContent(
 ) {
     val context = LocalContext.current
     val isWebView = campaign.adType == "webview"
+
+    // Tahan tombol back bawaan HP agar tidak bisa menutup iklan (kecuali lewat X)
+    // Untuk WebView, kita tidak pasang di sini, karena akan ditangani oleh AdWebViewComponent langsung
+    if (!isWebView) {
+        BackHandler(enabled = true) {
+            Log.i(TAG, "Tombol back ditekan, tapi diblokir oleh iklan.")
+            // Do nothing: Iklan tidak akan tertutup
+        }
+    }
 
     // Ambil delay dari konfigurasi (default 5 detik jika gagal fetch)
     val skipDelaySeconds = AdManager.config?.skipDurationSeconds ?: 5
@@ -98,7 +112,7 @@ private fun InterstitialAdContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .background(Color.Black),
+                .background(Color.Black), // Background solid black seperti screenshot Anda
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -107,7 +121,7 @@ private fun InterstitialAdContent(
                 text = "Ads",
                 color = Color.White,
                 fontSize = 10.sp,
-                modifier = Modifier.padding(start = 10.dp)
+                modifier = Modifier.padding(start = 6.dp)
             )
 
             // Kanan: Countdown ATAU Tombol Open & X
@@ -120,7 +134,7 @@ private fun InterstitialAdContent(
                         text = "Close in $countdown",
                         color = Color.White,
                         fontSize = 10.sp,
-                        modifier = Modifier.padding(end = 4.dp)
+                        modifier = Modifier.padding(end = 8.dp)
                     )
                 } else {
                     // Jika Webview, munculkan teks "Open" di samping X secara rapat
@@ -128,10 +142,10 @@ private fun InterstitialAdContent(
                         Text(
                             text = campaign.buttonText,
                             color = Color.White,
-                            fontSize = 12.sp,
+                            fontSize = 10.sp,
                             modifier = Modifier
                                 .clickable { openTargetUrl() }
-                                .padding(horizontal = 4.dp, vertical = 4.dp)
+                                .padding(horizontal = 8.dp, vertical = 4.dp) // Hitbox lumayan besar agar sering tak sengaja terpencet
                         )
                     }
 
@@ -141,7 +155,7 @@ private fun InterstitialAdContent(
                         contentDescription = "Close Ad",
                         tint = Color.White,
                         modifier = Modifier
-                            .size(40.dp) // Ukuran proporsional
+                            .size(32.dp) // Ukuran proporsional
                             .clickable { onClose() }
                             .padding(8.dp)
                     )
@@ -194,7 +208,6 @@ private fun InterstitialAdContent(
         }
     }
 }
-
 
 @Preview(showBackground = true, name = "1. WebView (Can Skip)")
 @Composable
