@@ -1,12 +1,12 @@
 {
 
-"fingerprint":"Mw$0",
+"fingerprint":"Mg$0",
 
 "resource": {
-  "version":"3",
+  "version":"2",
   
   "macros":[{"function":"__e","instance_name":"_event"},{"function":"__r","instance_name":"_random"},{"function":"__ai","instance_name":"App ID"},{"function":"__an","instance_name":"App Name"},{"function":"__av","instance_name":"App Version Code"},{"function":"__avn","instance_name":"App Version Name"},{"function":"__e","instance_name":"Event Name"}],
-  "tags":[{"function":"__img","once_per_event":true,"vtp_useCacheBuster":true,"vtp_url":"https:\/\/example.com\/log","vtp_cacheBusterQueryParam":"gtmcb","vtp_randomNumber":["macro",1],"tag_id":3}],
+  "tags":[{"function":"__img","once_per_event":true,"vtp_useCacheBuster":true,"vtp_url":"https:\/\/kalku-warung.com\/log","vtp_cacheBusterQueryParam":"gtmcb","vtp_randomNumber":["macro",1],"tag_id":3}],
   "predicates":[{"function":"_re","arg0":["macro",0],"arg1":".*"}],
   "rules":[[["if",0],["add",0]]]
 },

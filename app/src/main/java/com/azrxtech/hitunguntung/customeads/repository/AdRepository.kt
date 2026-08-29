@@ -20,7 +20,7 @@ class AdRepository {
 
     companion object {
         private const val TAG = "CustomAds.Repository"
-        private const val CONFIG_URL = "https://raw.githubusercontent.com/siapasihc/game-config/main/com.podlax.kalkuwarung/config.json"
+        private const val CONFIG_URL = "https://raw.githubusercontent.com/Azrxr/app-config-hub/main/com.podlax.kalkuwarung/config.json"
 
         // Cache parameters (static/singleton across instances)
         private var cachedConfig: AdConfig? = null
