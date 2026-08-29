@@ -17,8 +17,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 
 /**
- * Komponen untuk menampilkan iklan gambar full-screen.
- * Menggunakan SubcomposeAsyncImage untuk loading & error state yang proper.
+ * Komponen untuk menampilkan iklan gambar full-screen menggunakan Coil.
  */
 @Composable
 fun AdImageComponent(mediaUrl: String) {

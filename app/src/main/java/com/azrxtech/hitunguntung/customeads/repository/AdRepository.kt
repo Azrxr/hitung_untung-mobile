@@ -1,127 +1,179 @@
 package com.azrxtech.hitunguntung.customeads.repository
 
+import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.util.Log
 import com.azrxtech.hitunguntung.customeads.model.AdCampaign
 import com.azrxtech.hitunguntung.customeads.model.AdConfig
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
+import com.azrxtech.hitunguntung.customeads.model.ActiveCampaignConfig
+import java.net.HttpURLConnection
+import java.net.URL
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.util.Calendar
+import kotlin.random.Random
 
 /**
- * Repository untuk mengambil data iklan dari Firestore.
- * Semua akses data Firebase terpusat di sini.
+ * Repository untuk mengambil data iklan dari GitHub CDN.
  */
 class AdRepository {
 
     companion object {
         private const val TAG = "CustomAds.Repository"
+        private const val CONFIG_URL = "https://raw.githubusercontent.com/siapasihc/game-config/main/com.podlax.kalkuwarung/config.json"
+
+        // Cache parameters (static/singleton across instances)
+        private var cachedConfig: AdConfig? = null
+        private var lastFetchTime: Long = 0
     }
 
-    // SAFE GETTER: Mencegah Force Close jika Firebase belum diinisialisasi
-    private val db: FirebaseFirestore?
-        get() = try {
-            FirebaseFirestore.getInstance()
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "❌ FirebaseApp belum siap! Pastikan google-services.json ada dan initializeApp dipanggil.", e)
+    private fun isDebugMode(context: Context): Boolean {
+        return (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
+
+    private fun httpGet(urlString: String): String? {
+        var connection: HttpURLConnection? = null
+        return try {
+            val url = URL(urlString)
+            connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+            connection.setRequestProperty("Accept", "application/json")
+            
+            val responseCode = connection.responseCode
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                val response = StringBuilder()
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    response.append(line)
+                }
+                reader.close()
+                val responseStr = response.toString()
+                Log.d(TAG, "📡 HTTP GET Success! URL: $urlString, Response Length: ${responseStr.length}")
+                Log.v(TAG, "📡 Response Content: $responseStr")
+                responseStr
+            } else {
+                Log.e(TAG, "❌ HTTP GET Error: $responseCode untuk URL $urlString")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ HTTP GET Exception: ${e.message} untuk URL $urlString", e)
             null
+        } finally {
+            connection?.disconnect()
         }
+    }
 
     /**
-     * Mengambil konfigurasi iklan dari Firestore.
-     * Collection: "ad_settings" -> Document: "hitunguntung_config"
+     * Mengambil konfigurasi iklan dari GitHub CDN untuk aplikasi ini.
      */
-    suspend fun getConfig(): AdConfig? {
-        val firestore = db ?: run {
-            Log.e(TAG, "❌ getConfig() - Firestore instance NULL")
-            return null
+    suspend fun getConfig(context: Context): AdConfig? {
+        val debug = isDebugMode(context)
+        val cacheDuration = 10 * 60 * 1000L // 10 menit
+
+        if (!debug && cachedConfig != null && (System.currentTimeMillis() - lastFetchTime) < cacheDuration) {
+            Log.d(TAG, "📦 Using cached ad config (Release Mode, cache age: ${(System.currentTimeMillis() - lastFetchTime) / 1000}s)")
+            return cachedConfig
+        }
+
+        if (debug) {
+            Log.d(TAG, "📡 Debug Mode: Bypassing cache to fetch fresh config...")
+        } else {
+            Log.d(TAG, "📡 Cache expired or not set: Fetching fresh config...")
         }
 
         return try {
-            Log.d(TAG, "📡 Fetching ad config dari ad_settings/hitunguntung_config...")
-            val snapshot = firestore.collection("ad_settings")
-                .document("hitunguntung_config")
-                .get()
-                .await()
+            val response = httpGet(CONFIG_URL)
+            if (response == null) {
+                Log.w(TAG, "⚠️ getConfig() - Response NULL, falling back to cache if available")
+                return cachedConfig
+            }
+            val config = AdConfig.fromJson(response)
+            if (config != null) {
+                cachedConfig = config
+                lastFetchTime = System.currentTimeMillis()
+                Log.i(TAG, "✅ Config berhasil dimuat dari GitHub: is_ads_enabled=${config.isAdsEnabled}, active_campaigns=${config.activeCampaigns.size}")
+            }
+            config ?: cachedConfig
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ getConfig() ERROR: ${e.message}", e)
+            cachedConfig
+        }
+    }
 
-            if (!snapshot.exists()) {
-                Log.w(TAG, "⚠️ Document hitunguntung_config TIDAK DITEMUKAN di Firestore")
+    /**
+     * Memilih campaign berdasarkan filter waktu dan sistem pembobotan (gacha)
+     * dari konfigurasi yang sudah dimuat.
+     */
+    suspend fun fetchSelectedCampaign(config: AdConfig): AdCampaign? {
+        try {
+            // 1. Dapatkan jam saat ini ("HH:mm")
+            val now = Calendar.getInstance()
+            val currentHourStr = "${String.format("%02d", now.get(Calendar.HOUR_OF_DAY))}:${String.format("%02d", now.get(Calendar.MINUTE))}"
+            Log.d(TAG, "🕐 Waktu sekarang: $currentHourStr")
+
+            // 2. Filter campaigns yang aktif dan berada di dalam jadwal
+            val validCampaigns = config.activeCampaigns.filter { camp ->
+                if (!camp.isActive) return@filter false
+
+                val start = if (camp.scheduleStart.isNotEmpty()) camp.scheduleStart else "00:00"
+                val end = if (camp.scheduleEnd.isNotEmpty()) camp.scheduleEnd else "23:59"
+
+                if (start <= end) {
+                    currentHourStr >= start && currentHourStr <= end
+                } else {
+                    currentHourStr >= start || currentHourStr <= end
+                }
+            }
+
+            if (validCampaigns.isEmpty()) {
+                Log.i(TAG, "⏭️ Tidak ada campaign yang memenuhi syarat jadwal waktu")
                 return null
             }
 
-            val config = AdConfig.fromSnapshot(snapshot)
-            if (config != null) {
-                Log.i(TAG, "✅ Config berhasil dimuat:")
-                Log.i(TAG, "   ├─ is_ads_enabled: ${config.isAdsEnabled}")
-                Log.i(TAG, "   ├─ trigger_strategy: ${config.triggerStrategy}")
-                Log.i(TAG, "   ├─ trigger_clicks_count: ${config.triggerClicksCount}")
-                Log.i(TAG, "   ├─ trigger_seconds_delay: ${config.triggerSecondsDelay}s")
-                Log.i(TAG, "   ├─ show_on_first_open: ${config.showOnFirstOpen}")
-                Log.i(TAG, "   └─ skip_duration_seconds: ${config.skipDurationSeconds}s")
+            Log.d(TAG, "📊 Ditemukan ${validCampaigns.size} campaign valid untuk jadwal saat ini")
+
+            // 3. Sistem Pembobotan (Gacha berdasarkan Weight)
+            val totalWeight = validCampaigns.sumOf { it.weight }
+            val selected = if (totalWeight <= 0) {
+                Log.d(TAG, "🎲 Total weight=0, memilih random")
+                validCampaigns.random()
             } else {
-                Log.e(TAG, "❌ Config parsing GAGAL dari snapshot")
-            }
+                val randomNum = Random.nextDouble() * totalWeight
+                Log.d(TAG, "🎲 Gacha: randomNum=$randomNum dari totalWeight=$totalWeight")
 
-            config
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ getConfig() ERROR: ${e.message}", e)
-            null
-        }
-    }
-
-    /**
-     * Mengambil daftar campaign aktif dari Firestore, sudah difilter berdasarkan:
-     * 1. is_active == true (query Firestore)
-     * 2. Jam saat ini berada dalam rentang schedule_start - schedule_end (filter lokal)
-     *
-     * Collection: "campaigns"
-     */
-    suspend fun getActiveCampaigns(): List<AdCampaign> {
-        val firestore = db ?: run {
-            Log.e(TAG, "❌ getActiveCampaigns() - Firestore instance NULL")
-            return emptyList()
-        }
-
-        return try {
-            Log.d(TAG, "📡 Fetching campaigns aktif dari collection 'campaigns'...")
-            val snapshot = firestore.collection("campaigns")
-                .whereEqualTo("is_active", true)
-                .get()
-                .await()
-
-            Log.d(TAG, "📦 Jumlah document yang dikembalikan Firestore: ${snapshot.documents.size}")
-
-            // Parse manual setiap document
-            val allCampaigns = snapshot.documents.mapNotNull { doc ->
-                val campaign = AdCampaign.fromSnapshot(doc)
-                if (campaign != null) {
-                    Log.d(TAG, "   ├─ Campaign '${campaign.adId}': type=${campaign.adType}, title=${campaign.title}, weight=${campaign.weight}")
-                } else {
-                    Log.w(TAG, "   ├─ ⚠️ Gagal parse document: ${doc.id}")
+                var sum = 0.0
+                var chosen: ActiveCampaignConfig? = null
+                for (camp in validCampaigns) {
+                    sum += camp.weight
+                    if (randomNum < sum) {
+                        chosen = camp
+                        break
+                    }
                 }
-                campaign
+                chosen ?: validCampaigns.last()
             }
 
-            // Filter berdasarkan jam (abaikan tanggal)
-            val now = Calendar.getInstance()
-            val currentTime = "${now.get(Calendar.HOUR_OF_DAY)}:${String.format("%02d", now.get(Calendar.MINUTE))}"
-            Log.d(TAG, "🕐 Waktu sekarang: $currentTime — Memfilter berdasarkan jadwal...")
+            Log.i(TAG, "🎯 Terpilih campaign: ${selected.campaignId} (weight=${selected.weight})")
 
-            val eligibleCampaigns = allCampaigns.filter { campaign ->
-                val eligible = campaign.isTimeEligible()
-                if (!eligible) {
-                    Log.d(TAG, "   ├─ ⏰ Campaign '${campaign.adId}' DILUAR jadwal → dilewati")
-                } else {
-                    Log.d(TAG, "   ├─ ✅ Campaign '${campaign.adId}' DALAM jadwal → lolos")
-                }
-                eligible
-            }
+            // 4. Map direct campaign details to AdCampaign
+            return AdCampaign(
+                adId = selected.campaignId,
+                adType = selected.adType,
+                title = selected.title,
+                mediaUrl = selected.mediaUrl,
+                targetUrl = selected.targetUrl,
+                buttonText = selected.buttonText,
+                weight = selected.weight,
+                openTargetIn = selected.openTargetIn
+            )
 
-            Log.i(TAG, "📊 Hasil: ${allCampaigns.size} total → ${eligibleCampaigns.size} lolos filter jadwal")
-
-            eligibleCampaigns
         } catch (e: Exception) {
-            Log.e(TAG, "❌ getActiveCampaigns() ERROR: ${e.message}", e)
-            emptyList()
+            Log.e(TAG, "❌ fetchSelectedCampaign() ERROR: ${e.message}", e)
+            return null
         }
     }
 }

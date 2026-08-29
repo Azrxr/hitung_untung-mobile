@@ -37,7 +37,7 @@ fun TopBarSection() {
         Spacer(modifier = Modifier.width(12.dp))
 
         Text(
-            text = "Kalkulator Dagang",
+            text = "Kalkulator Warung",
             color = MaterialTheme.colorScheme.primary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold

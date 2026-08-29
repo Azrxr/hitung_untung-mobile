@@ -1,4 +1,4 @@
-# Custom Ads System — Hitung Untung
+# Custom Ads System — Kalkulator Warung
 Sistem iklan kustom mandiri berbasis Firebase Firestore.
 Dibuat untuk menampilkan iklan interstitial (gambar, video, webview) tanpa memerlukan SDK iklan pihak ketiga.
 

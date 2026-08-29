@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.azrxtech.hitunguntung"
+        applicationId = "com.podlax.kalkuwarung"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -51,7 +51,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -71,4 +70,20 @@ dependencies {
 
     // Custom Tabs (In-App Browser)
     implementation(libs.androidx.browser)
+
+    // TikTok Business SDK
+    implementation(libs.tiktok.business.android.sdk)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.common.java8)
+    implementation(libs.installreferrer)
+
+    // Media3 ExoPlayer for Native Video Ads
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
+    // Google Tag Manager
+    implementation(libs.google.play.services.tagmanager)
+
+    // Meta (Facebook) SDK Core
+    implementation(libs.facebook.android.sdk.core)
 }

@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Hitung Untung</string>
+    <string name="app_name">Kalkulator Warung</string>
+    <string name="facebook_app_id">0</string>
+    <string name="facebook_client_token">0</string>
 </resources>
